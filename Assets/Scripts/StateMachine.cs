@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Video;
 
 public class StateMachine : MonoBehaviour
 {
@@ -17,10 +18,16 @@ public class StateMachine : MonoBehaviour
 
     Rigidbody rb;
 
-    void Start()
+    PlayerController player;
+
+    private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        player = FindObjectOfType<PlayerController>();
+    }
 
+    void Start()
+    {
         NextState();
     }
 
@@ -55,6 +62,20 @@ public class StateMachine : MonoBehaviour
 
         while (state == State.Patrol) //"Update loop"
         {
+            transform.rotation *= Quaternion.Euler(0f, 50f * Time.deltaTime, 0f);
+            
+            //Direction from A to B is... B - A
+            Vector3 directionToPlayer = player.transform.position - transform.position;
+            directionToPlayer.Normalize();
+
+            //Dot product parameters should be "Normalised"
+            float result = Vector3.Dot(transform.forward, directionToPlayer);
+
+            if (result >= 0.95f)
+            {
+                state = State.Chasing;
+            }
+
             yield return null; //Wait for a frame
         }
 
@@ -98,14 +119,39 @@ public class StateMachine : MonoBehaviour
 
             transform.localScale = new Vector3(wave, wave2, wave);
 
-            float shimmy = Mathf.Cos(Time.time * 30f) * 0.9f + 0.3f;
+            float shimmy = Mathf.Cos(Time.time * 30f) * 10f + 30f;
 
             //Choose transform movement or rigidbody movement
             //transform.position += transform.right * shimmy * Time.deltaTime;
             
-            rb.AddForce(Vector3.right * shimmy);
+            Vector3 directionToPlayer = player.transform.position - transform.position;
+            //directionToPlayer.Normalize();
 
-            yield return null; //Wait for a frame
+            float angle = Vector3.SignedAngle(transform.forward, directionToPlayer, Vector3.up);
+
+            if (angle > 0)
+            {
+                transform.rotation *= Quaternion.Euler(0f, 50f * Time.deltaTime, 0f);
+            }
+
+            else
+            {
+                transform.rotation *= Quaternion.Euler(0f, -50f * Time.deltaTime, 0f);
+            }
+
+            rb.AddForce(transform.forward * shimmy, ForceMode.Acceleration);
+
+            if (directionToPlayer.magnitude < 2f)
+            {
+                state = State.Attack;
+            }
+
+            else if (directionToPlayer.magnitude > 10f)
+            {
+                state = State.Patrol;
+            }
+
+            yield return new WaitForFixedUpdate(); //Wait for the next fixed update
         }
 
         //Exit point/ Tear down
@@ -120,6 +166,16 @@ public class StateMachine : MonoBehaviour
 
         while (state == State.Attack) //"Update loop"
         {
+            Vector3 scale = transform.localScale;
+            scale.z = Mathf.Cos(Time.time * 20f) * 0.1f + 1f;
+            transform.localScale = scale;
+
+            Vector3 directionToPlayer = transform.position - transform.position;
+            if (directionToPlayer.magnitude > 3f)
+            {
+                state = State.Chasing;
+            }
+
             yield return null; //Wait for a frame
         }
 
