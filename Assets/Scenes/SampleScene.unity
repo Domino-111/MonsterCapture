@@ -182,14 +182,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf0d1e644e24d57458312260a6374740, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 5
+  speed: 500
   jumpPower: 5
   gravity: 1
   rb: {fileID: 466313197}
   groundMask:
     serializedVersion: 2
     m_Bits: 64
-  input: {x: 0, y: 0}
+  airControlMultiplier: 1.6
+  maxSpeed: 10
+  camera: {fileID: 963194227}
 --- !u!136 &466313199
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -604,8 +606,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: -0.23246288, y: -0.0026294428, z: 0.0006252267, w: -0.97260153}
+  m_LocalPosition: {x: -0.017436147, y: 7.790203, z: -24.763254}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

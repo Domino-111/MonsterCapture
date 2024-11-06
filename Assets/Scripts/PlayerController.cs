@@ -17,16 +17,70 @@ public class PlayerController : MonoBehaviour
     public Rigidbody rb;
     public LayerMask groundMask;
 
-    public Vector2 input;
+    Vector3 dampVelocity;
+    Vector2 airDampVelocity;
+    
+    public float airControlMultiplier = 1.6f;
+    public float maxSpeed = 10f;
+
+    [SerializeField] private Camera camera;
 
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        if (camera == null)
+        {
+            camera = Camera.main ? Camera.main : FindAnyObjectByType<Camera>(); //Nested ifelse
+        }
     }
 
     private void Update()
     {
         Jump();
+    }
+
+    private void FixedUpdate()
+    {
+        Movement();
+    }
+
+    
+
+    private void Movement()
+    {
+        Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
+
+        Vector3 inputTransformed = camera.transform.TransformDirection(input);
+        inputTransformed.y = 0f;
+        
+        input = inputTransformed.normalized * input.magnitude;
+
+        if (input.magnitude > 1)
+        {
+            input.Normalize();
+        }
+        input *= speed * Time.deltaTime;
+
+        if (isGrounded)
+        {
+            rb.velocity = Vector3.SmoothDamp(rb.velocity, new Vector3(input.x, rb.velocity.y, input.z), ref dampVelocity, 0.1f);
+
+            airDampVelocity = Vector2.zero;
+        }
+
+        else
+        {
+            dampVelocity = Vector3.zero;
+
+            rb.AddForce(new Vector3(input.x, 0f, input.y) * airControlMultiplier, ForceMode.Acceleration);
+
+            Vector2 xzMovement = new Vector2(rb.velocity.x, rb.velocity.z); //Creating new air movement only affecting our horizontal movement and not our vertical fall
+
+            xzMovement = Vector2.SmoothDamp(xzMovement, xzMovement.normalized * maxSpeed, ref airDampVelocity, 0.1f); //Clamping the max speed of air speed
+
+            rb.velocity = new Vector3(xzMovement.x, rb.velocity.y, xzMovement.y); //Implimenting new movement into controller
+        }
     }
 
     private void Jump()
