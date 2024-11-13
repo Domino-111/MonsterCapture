@@ -22,12 +22,82 @@ public class CameraController : MonoBehaviour
     [Header("Orbit")]
     [SerializeField] private float _rotationSpeed = 90f;
     [SerializeField] private float _orbitDistance = 5f;
+
+    [SerializeField] private float _minVertAngle = -30f;
+    [SerializeField] private float _maxVertAngle = 60f;
+
+    private bool _orbitEnabled = true;
+
+    [SerializeField] private float _zoomSpeed = 0.1f;
     #endregion
+
+    #region
+    [Header("Align")]
+    [SerializeField, Min(0f)] private float alignDelay = 2f;
+    private float lastManualRotationTime = 0f;
+    #endregion
+
+    private void OnEnable()
+    {
+        Cursor.lockState = CursorLockMode.Confined;
+        Cursor.visible = false;
+    }
+
+    private void OnDisable()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
 
     private void Awake()
     {
         _focusPoint = _focus.position + _focusOffSet;
         transform.localRotation = Quaternion.Euler(_orbitAngles);
+    }
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Tab))
+        {
+            if (!_orbitEnabled)
+            {
+                Cursor.lockState = CursorLockMode.Confined;
+                Cursor.visible = true;
+                _orbitEnabled = true;
+            }
+
+            else 
+            {
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
+                _orbitEnabled = false;
+            }
+        }
+
+        _orbitDistance -= Input.mouseScrollDelta.y * _zoomSpeed;
+
+        _orbitDistance = Mathf.Clamp(_orbitDistance, 3f, 30f);
+    }
+
+    private float _lastDistance = -1f;
+
+    private void FixedUpdate()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(_focusPoint, transform.position, out hit, _orbitDistance))
+        {
+            _lastDistance = _orbitDistance;
+            _orbitDistance = hit.distance;
+        }
+
+        else
+        {
+            if (_lastDistance >= 0f)
+            {
+                _orbitDistance = _lastDistance;
+                _lastDistance = -1f;
+            }
+        }
     }
 
     private void LateUpdate()
@@ -38,6 +108,7 @@ public class CameraController : MonoBehaviour
 
         if (ManualRotation() || AutomaticRotation())
         {
+            ConstrainAngles();
             lookRotation = Quaternion.Euler(_orbitAngles);
         }
 
@@ -50,6 +121,8 @@ public class CameraController : MonoBehaviour
 
     private bool ManualRotation()
     {
+        if (!_orbitEnabled) return false;
+
         Vector2 input = new Vector2(-Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X"));
 
         float e = 0.001f; // Deadzone
@@ -64,7 +137,20 @@ public class CameraController : MonoBehaviour
 
     private bool AutomaticRotation()
     {
-        return false;
+        if (Time.unscaledTime - lastManualRotationTime < alignDelay) return false;
+
+        Vector2 moveDelta = new Vector2(_focusPoint.x - _previousFocusPoint.x, _focusPoint.z - _previousFocusPoint.z);
+
+        if (moveDelta.sqrMagnitude < 0.0001f)
+        {
+            return false;
+        }
+
+        float headingAngle = GetAngle(moveDelta.normalized);
+
+        _orbitAngles.y = Mathf.MoveTowardsAngle(_orbitAngles.y, headingAngle, _rotationSpeed * Time.unscaledDeltaTime);
+
+        return true;
     }
 
     private void UpdateFocusPoint()
@@ -94,6 +180,44 @@ public class CameraController : MonoBehaviour
         else
         {
             _focusPoint = targetFocusPoint;
+        }
+    }
+
+    float GetAngle(Vector2 direction)
+    {
+        float angle = Mathf.Acos(direction.y) * Mathf.Rad2Deg;
+
+        if (direction.x < 0f)
+        {
+            return 360f - angle;
+        }
+
+        else
+        {
+            return angle;
+        }
+    }
+
+    void ConstrainAngles()
+    {
+        _orbitAngles.x = Mathf.Clamp(_orbitAngles.x, _minVertAngle, _maxVertAngle);
+
+        if (_orbitAngles.y < 0f)
+        {
+            _orbitAngles.y += 360f;
+        }
+
+        else if (_orbitAngles.y < 360f)
+        {
+            _orbitAngles.y -= 360f;
+        }
+    }
+
+    private void OnValidate()
+    {
+        if (_maxVertAngle < _minVertAngle)
+        {
+            _maxVertAngle = _minVertAngle;
         }
     }
 }
