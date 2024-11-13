@@ -19,7 +19,7 @@ public class PlayerController : MonoBehaviour
 
     Vector3 dampVelocity;
     Vector2 airDampVelocity;
-    
+
     public float airControlMultiplier = 1.6f;
     public float maxSpeed = 10f;
 
@@ -45,7 +45,7 @@ public class PlayerController : MonoBehaviour
         Movement();
     }
 
-    
+
 
     private void Movement()
     {
@@ -53,7 +53,7 @@ public class PlayerController : MonoBehaviour
 
         Vector3 inputTransformed = camera.transform.TransformDirection(input);
         inputTransformed.y = 0f;
-        
+
         input = inputTransformed.normalized * input.magnitude;
 
         if (input.magnitude > 1)
@@ -73,13 +73,15 @@ public class PlayerController : MonoBehaviour
         {
             dampVelocity = Vector3.zero;
 
-            rb.AddForce(new Vector3(input.x, 0f, input.y) * airControlMultiplier, ForceMode.Acceleration);
+            rb.AddForce(new Vector3(input.x, 0f, input.z) * airControlMultiplier, ForceMode.Acceleration);
 
             Vector2 xzMovement = new Vector2(rb.velocity.x, rb.velocity.z); //Creating new air movement only affecting our horizontal movement and not our vertical fall
+            if (rb.velocity.magnitude > maxSpeed)
+            {
+                xzMovement = Vector2.SmoothDamp(xzMovement, xzMovement.normalized * maxSpeed, ref airDampVelocity, 0.1f); //Clamping the max speed of air speed
 
-            xzMovement = Vector2.SmoothDamp(xzMovement, xzMovement.normalized * maxSpeed, ref airDampVelocity, 0.1f); //Clamping the max speed of air speed
-
-            rb.velocity = new Vector3(xzMovement.x, rb.velocity.y, xzMovement.y); //Implimenting new movement into controller
+                rb.velocity = new Vector3(xzMovement.x, rb.velocity.y, xzMovement.y); //Implimenting new movement into controller
+            }
         }
     }
 

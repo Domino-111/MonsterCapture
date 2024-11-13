@@ -189,7 +189,7 @@ MonoBehaviour:
   groundMask:
     serializedVersion: 2
     m_Bits: 64
-  airControlMultiplier: 1.6
+  airControlMultiplier: 5
   maxSpeed: 10
   camera: {fileID: 963194227}
 --- !u!136 &466313199
@@ -532,6 +532,7 @@ GameObject:
   - component: {fileID: 963194228}
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
+  - component: {fileID: 963194229}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -613,6 +614,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &963194229
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 75ef79309eaab43459e7c2d7051119df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _focus: {fileID: 466313202}
+  _focusOffSet: {x: 0, y: 1, z: 0}
+  _focusRadius: 1
+  _focusCentering: 0.5
+  _rotationSpeed: 90
+  _orbitDistance: 5
 --- !u!1 &1670287593
 GameObject:
   m_ObjectHideFlags: 0
