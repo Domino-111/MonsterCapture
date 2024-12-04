@@ -19,22 +19,24 @@ public class StateMachine : MonoBehaviour
 
     public State state;
 
-    Rigidbody rb;
+    protected Rigidbody rb;
 
-    PlayerController player;
+    protected PlayerController player;
 
-    private void Awake()
+    public Renderer rend;
+
+    protected void Awake()
     {
         rb = GetComponent<Rigidbody>();
         player = FindObjectOfType<PlayerController>();
     }
 
-    void Start()
+    protected void Start()
     {
         NextState();
     }
 
-    void NextState()
+    protected void NextState()
     {
         switch (state)
         {
@@ -59,14 +61,16 @@ public class StateMachine : MonoBehaviour
         }
     }
 
-    IEnumerator PatrolState()
+    protected virtual IEnumerator PatrolState()
     {//Setup / Entry point
         Debug.Log("Entering Patrol State");
 
         while (state == State.Patrol) //"Update loop"
         {
+            rend.material.color = Color.blue;
+
             transform.rotation *= Quaternion.Euler(0f, 50f * Time.deltaTime, 0f);
-            
+
             //Direction from A to B is... B - A
             Vector3 directionToPlayer = player.transform.position - transform.position;
             directionToPlayer.Normalize();
@@ -98,6 +102,8 @@ public class StateMachine : MonoBehaviour
 
         while (state == State.Investigating) //"Update loop"
         {
+            rend.material.color = Color.green;
+
             deltaSum += Time.deltaTime;
             yield return null; //Wait for a frame
         }
@@ -111,12 +117,14 @@ public class StateMachine : MonoBehaviour
         NextState();
     }
 
-    IEnumerator ChasingState()
+    protected virtual IEnumerator ChasingState()
     {//Setup / Entry point
         Debug.Log("Entering Chasing State");
 
         while (state == State.Chasing) //"Update loop"
         {
+            rend.material.color = Color.red;
+
             float wave = Mathf.Sin(Time.time * 20f) * 0.1f + 1f;
             float wave2 = Mathf.Cos(Time.time * 20f) * 0.1f + 1f;
 
@@ -126,7 +134,7 @@ public class StateMachine : MonoBehaviour
 
             //Choose transform movement or rigidbody movement
             //transform.position += transform.right * shimmy * Time.deltaTime;
-            
+
             Vector3 directionToPlayer = player.transform.position - transform.position;
             //directionToPlayer.Normalize();
 
@@ -169,6 +177,8 @@ public class StateMachine : MonoBehaviour
 
         while (state == State.Attack) //"Update loop"
         {
+            rend.material.color = Color.red;
+
             Vector3 scale = transform.localScale;
             scale.z = Mathf.Cos(Time.time * 20f) * 0.1f + 1f;
             transform.localScale = scale;
@@ -194,12 +204,14 @@ public class StateMachine : MonoBehaviour
 
         while (state == State.Captured) //"Update loop"
         {
+            rend.material.color = Color.white;
+
             yield return null; //Wait for a frame
         }
+    }
 
-        //Exit point/ Tear down
-        Debug.Log("Exiting Captured State");
-
-        NextState();
+    public void Captured()
+    {
+        state = State.Captured;
     }
 }

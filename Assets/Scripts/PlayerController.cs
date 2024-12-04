@@ -38,6 +38,13 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         Jump();
+
+        RaycastHit hit;
+        
+        if (Input.GetKeyDown(KeyCode.Mouse0) && Physics.SphereCast(transform.position, 500f, Vector3.zero, out hit, 0f, 7))
+        {
+            hit.transform.gameObject.GetComponent<StateMachine>().Captured();
+        }
     }
 
     private void FixedUpdate()

@@ -1,65 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Video;
 
-public class PassiveCreature : MonoBehaviour
+public class PassiveCreature : StateMachine
 {
-    public float minSpeed;
-    public float maxSpeed;
-
-    public enum State
-    {
-        Patrol,
-        Investigating,
-        Fleeing,
-        Captured,
-    }
-
-    public State state;
-
-    Rigidbody rb;
-
-    PlayerController player;
-
-    private void Awake()
-    {
-        rb = GetComponent<Rigidbody>();
-        player = FindObjectOfType<PlayerController>();
-    }
-
-    void Start()
-    {
-        NextState();
-    }
-
-    void NextState()
-    {
-        switch (state)
-        {
-            case State.Patrol:
-                StartCoroutine(PatrolState());
-                break;
-            case State.Investigating:
-                StartCoroutine(InvestigatingState());
-                break;
-            case State.Fleeing:
-                StartCoroutine(FleeingState());
-                break;
-            case State.Captured:
-                StartCoroutine(CapturedState());
-                break;
-            default:
-                Debug.LogError("State does not exist");
-                break;
-        }
-    }
-
-    IEnumerator PatrolState()
+    protected override IEnumerator PatrolState()
     {//Setup / Entry point
         Debug.Log("Entering Patrol State");
 
         while (state == State.Patrol) //"Update loop"
         {
+            rend.material.color = Color.green;
+
             transform.rotation *= Quaternion.Euler(0f, 50f * Time.deltaTime, 0f);
 
             //Direction from A to B is... B - A
@@ -71,7 +24,7 @@ public class PassiveCreature : MonoBehaviour
 
             if (result >= 0.95f)
             {
-                state = State.Fleeing;
+                state = State.Chasing;
             }
 
             yield return null; //Wait for a frame
@@ -83,35 +36,14 @@ public class PassiveCreature : MonoBehaviour
         NextState();
     }
 
-    IEnumerator InvestigatingState()
+    protected override IEnumerator ChasingState()
     {
-        //Setup / Entry point
-        Debug.Log("Entering Investigating State");
+        Debug.Log("Entering Chasing State");
 
-        float startTime = Time.time;
-        float deltaSum = 0;
-
-        while (state == State.Investigating) //"Update loop"
+        while (state == State.Chasing) //"Update loop"
         {
-            deltaSum += Time.deltaTime;
-            yield return null; //Wait for a frame
-        }
+            rend.material.color = Color.yellow;
 
-        float endTime = Time.time - startTime;
-        Debug.Log("Delta sum = " + deltaSum + " | End time = " + endTime);
-
-        //Exit point/ Tear down
-        Debug.Log("Exiting Investigating State");
-
-        NextState();
-    }
-
-    IEnumerator FleeingState()
-    {
-        Debug.Log("Entering Fleeing State");
-
-        while (state == State.Fleeing) //"Update loop"
-        {
             float wave = Mathf.Sin(Time.time * 20f) * 0.1f + 1f;
             float wave2 = Mathf.Cos(Time.time * 20f) * 0.1f + 1f;
 
@@ -123,6 +55,7 @@ public class PassiveCreature : MonoBehaviour
             //transform.position += transform.right * shimmy * Time.deltaTime;
 
             Vector3 directionToPlayer = player.transform.position - transform.position;
+            directionToPlayer = -directionToPlayer;
             //directionToPlayer.Normalize();
 
             float angle = Vector3.SignedAngle(transform.forward, directionToPlayer, Vector3.up);
@@ -139,7 +72,7 @@ public class PassiveCreature : MonoBehaviour
 
             rb.AddForce(transform.forward * shimmy, ForceMode.Acceleration);
 
-            else if (directionToPlayer.magnitude > 10f)
+            if (directionToPlayer.magnitude > 10f)
             {
                 state = State.Patrol;
             }
@@ -147,20 +80,8 @@ public class PassiveCreature : MonoBehaviour
             yield return new WaitForFixedUpdate(); //Wait for the next fixed update
         }
 
-        Debug.Log("Exiting Fleeing State");
-    }
-
-    IEnumerator CapturedState()
-    {//Setup / Entry point
-        Debug.Log("Entering Captured State");
-
-        while (state == State.Captured) //"Update loop"
-        {
-            yield return null; //Wait for a frame
-        }
-
         //Exit point/ Tear down
-        Debug.Log("Exiting Captured State");
+        Debug.Log("Exiting Chasing State");
 
         NextState();
     }
