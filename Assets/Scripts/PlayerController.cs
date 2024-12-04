@@ -45,8 +45,6 @@ public class PlayerController : MonoBehaviour
         Movement();
     }
 
-
-
     private void Movement()
     {
         Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));

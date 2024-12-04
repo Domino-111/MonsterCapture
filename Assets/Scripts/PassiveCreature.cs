@@ -1,9 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Experimental.Video;
 
-public class StateMachine : MonoBehaviour
+public class PassiveCreature : MonoBehaviour
 {
     public float minSpeed;
     public float maxSpeed;
@@ -12,8 +11,7 @@ public class StateMachine : MonoBehaviour
     {
         Patrol,
         Investigating,
-        Chasing,
-        Attack,
+        Fleeing,
         Captured,
     }
 
@@ -44,11 +42,8 @@ public class StateMachine : MonoBehaviour
             case State.Investigating:
                 StartCoroutine(InvestigatingState());
                 break;
-            case State.Chasing:
-                StartCoroutine(ChasingState());
-                break;
-            case State.Attack:
-                StartCoroutine(AttackState());
+            case State.Fleeing:
+                StartCoroutine(FleeingState());
                 break;
             case State.Captured:
                 StartCoroutine(CapturedState());
@@ -66,7 +61,7 @@ public class StateMachine : MonoBehaviour
         while (state == State.Patrol) //"Update loop"
         {
             transform.rotation *= Quaternion.Euler(0f, 50f * Time.deltaTime, 0f);
-            
+
             //Direction from A to B is... B - A
             Vector3 directionToPlayer = player.transform.position - transform.position;
             directionToPlayer.Normalize();
@@ -76,7 +71,7 @@ public class StateMachine : MonoBehaviour
 
             if (result >= 0.95f)
             {
-                state = State.Chasing;
+                state = State.Fleeing;
             }
 
             yield return null; //Wait for a frame
@@ -111,11 +106,11 @@ public class StateMachine : MonoBehaviour
         NextState();
     }
 
-    IEnumerator ChasingState()
-    {//Setup / Entry point
-        Debug.Log("Entering Chasing State");
+    IEnumerator FleeingState()
+    {
+        Debug.Log("Entering Fleeing State");
 
-        while (state == State.Chasing) //"Update loop"
+        while (state == State.Fleeing) //"Update loop"
         {
             float wave = Mathf.Sin(Time.time * 20f) * 0.1f + 1f;
             float wave2 = Mathf.Cos(Time.time * 20f) * 0.1f + 1f;
@@ -126,7 +121,7 @@ public class StateMachine : MonoBehaviour
 
             //Choose transform movement or rigidbody movement
             //transform.position += transform.right * shimmy * Time.deltaTime;
-            
+
             Vector3 directionToPlayer = player.transform.position - transform.position;
             //directionToPlayer.Normalize();
 
@@ -144,11 +139,6 @@ public class StateMachine : MonoBehaviour
 
             rb.AddForce(transform.forward * shimmy, ForceMode.Acceleration);
 
-            if (directionToPlayer.magnitude < 2f)
-            {
-                state = State.Attack;
-            }
-
             else if (directionToPlayer.magnitude > 10f)
             {
                 state = State.Patrol;
@@ -157,35 +147,7 @@ public class StateMachine : MonoBehaviour
             yield return new WaitForFixedUpdate(); //Wait for the next fixed update
         }
 
-        //Exit point/ Tear down
-        Debug.Log("Exiting Chasing State");
-
-        NextState();
-    }
-
-    IEnumerator AttackState()
-    {//Setup / Entry point
-        Debug.Log("Entering Attack State");
-
-        while (state == State.Attack) //"Update loop"
-        {
-            Vector3 scale = transform.localScale;
-            scale.z = Mathf.Cos(Time.time * 20f) * 0.1f + 1f;
-            transform.localScale = scale;
-
-            Vector3 directionToPlayer = transform.position - transform.position;
-            if (directionToPlayer.magnitude > 3f)
-            {
-                state = State.Chasing;
-            }
-
-            yield return null; //Wait for a frame
-        }
-
-        //Exit point/ Tear down
-        Debug.Log("Exiting Attack State");
-
-        NextState();
+        Debug.Log("Exiting Fleeing State");
     }
 
     IEnumerator CapturedState()
