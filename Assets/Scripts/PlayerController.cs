@@ -23,6 +23,8 @@ public class PlayerController : MonoBehaviour
     public float airControlMultiplier = 1.6f;
     public float maxSpeed = 10f;
 
+    public LayerMask creature;
+
     [SerializeField] private Camera camera;
 
     private void Start()
@@ -38,12 +40,14 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         Jump();
-
-        RaycastHit hit;
         
-        if (Input.GetKeyDown(KeyCode.Mouse0) && Physics.SphereCast(transform.position, 500f, Vector3.zero, out hit, 0f, 7))
+        if (Input.GetKeyDown(KeyCode.Mouse0))
         {
-            hit.transform.gameObject.GetComponent<StateMachine>().Captured();
+            Collider[] monsters = Physics.OverlapSphere(transform.position, 2.5f, creature);
+            foreach (Collider collider in monsters)
+            {
+                collider.transform.gameObject.GetComponent<StateMachine>().Captured();
+            }
         }
     }
 
